@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Audio to Link</title>
+</head>
+<body>
+  <h2>Audio → Link</h2>
+
+  <input type="file" id="audio" accept="audio/*">
+  <button id="btn">Upload</button>
+
+  <div id="out"></div>
+
+  <script>
+    const CLOUD_NAME = "dwiozm4vz";        // cloud name kamu
+    const UPLOAD_PRESET = "video_unsigned"; // preset UNSIGNED kamu
+
+    const btn = document.getElementById("btn");
+    const out = document.getElementById("out");
+
+    btn.onclick = async () => {
+      const file = document.getElementById("audio").files[0];
+      if (!file) return alert("Pilih audio dulu");
+
+      btn.disabled = true;
+      btn.textContent = "Uploading...";
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", UPLOAD_PRESET);
+
+      try {
+        // Audio di Cloudinary upload lewat endpoint video
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`, {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await res.json();
+        if (!data.secure_url) throw new Error("No secure_url");
+
+        out.innerHTML = `
+          <p>Link:</p>
+          <input id="link" value="${data.secure_url}" readonly style="width:100%">
+          <p><button onclick="navigator.clipboard.writeText(document.getElementById('link').value)">Copy</button></p>
+          <audio controls src="${data.secure_url}" style="width:100%"></audio>
+        `;
+      } catch (e) {
+        alert("Upload gagal. Cek preset unsigned & cloud name.");
+      }
+
+      btn.disabled = false;
+      btn.textContent = "Upload";
+    };
+  </script>
+</body>
+</html>
